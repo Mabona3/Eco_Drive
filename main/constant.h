@@ -1,8 +1,8 @@
 /*#define WIFI_SSID "Mabona"*/
 /*#define WIFI_PASSWORD "fcsz6069"*/
 
-#define WIFI_SSID "emy's Galaxy A34 5G"
-#define WIFI_PASSWORD "t9xgfqriwiqyxcd"
+#define WIFI_SSID "Mabona"
+#define WIFI_PASSWORD "fcsz6069"
 
 #define API_KEY "AIzaSyB_WRkmQ0ODc_wfk2BL4wFUxgmaFCVA44s"
 #define DATABASE_URL "https://second-mabona-iot-default-rtdb.firebaseio.com/" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app

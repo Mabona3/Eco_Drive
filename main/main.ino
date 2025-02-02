@@ -6,6 +6,7 @@
 #include "wifinet.h"
 #include "firebase.h"
 #include "gps.h"
+#include "carStatus.h"
 
 void setup() {
   Serial.begin(115200);
@@ -21,7 +22,23 @@ void setup() {
     NULL
   );
   xTaskCreate(
-    GPS_read,
+    RPMSensor_read,
+    "Reading GPS", 
+    10000,
+    NULL,
+    1,
+    NULL
+  );
+  xTaskCreate(
+    FuelSensor_read,
+    "Reading GPS", 
+    10000,
+    NULL,
+    1,
+    NULL
+  );
+  xTaskCreate(
+    TempSensor_read,
     "Reading GPS", 
     10000,
     NULL,

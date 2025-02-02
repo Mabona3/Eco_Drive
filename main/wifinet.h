@@ -2,6 +2,7 @@
 #define WIFINET_H
 
 #include <WiFi.h>
+#include "constant.h"
 
 void WiFiInit() {
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
