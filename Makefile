@@ -12,11 +12,10 @@ compile: $(MAIN)
 	$(ARD) compile $(MAIN) --output-dir $(BUILD) $(FLAGS) --config-file $(CONFIG)
 
 upload: $(BUILD)
-	$(ARD) upload --config-file $(CONFIG) --build-path $(BUILD) $(FLAGS)
-	$(ARD) monitor -c 115200 $(FLAGS)
+	make -C main upload
 
 monitor:
-	$(ARD) monitor -c 115200 $(FLAGS)
+	make -C main monitor
 
 clean:
 	rm -rf $(BUILD)

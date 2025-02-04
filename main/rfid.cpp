@@ -1,26 +1,28 @@
 #include "rfid.h"
 
+/* Private functions */
 void printHex(byte *buffer, byte bufferSize);
 
+/* Public functions */
 void RFID_init() {
   SPI.begin();
-  mfrc522.PCD_Init();
-  mfrc522.PCD_DumpVersionToSerial();
-  for (byte i = 0; i < 6; i++) {
-    key.keyByte[i] = 0xFF;
-  }
-  Serial.println(F("RFID initialized"));
-  Serial.print("Using the following key: ");
-  printHex(key.keyByte, MFRC522::MF_KEY_SIZE);
-}
-
-void printHex(byte *buffer, byte bufferSize) {
-  for (byte i = 0; i < bufferSize; i++) {
-    Serial.print(buffer[i] < 0x10 ? " 0" : " ");
-    Serial.print(buffer[i], HEX);
-  }
+  rfid.PCD_Init();
+  MFRC522Debug::PCD_DumpVersionToSerial(rfid, Serial);	// Show details of PCD - MFRC522 Card Reader details.
+  Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
 }
 
 void RFID_read(void *pvParameters) {
+  if (!rfid.PICC_IsNewCardPresent()) {
+    return;
+  }
 
+  // Select one of the cards.
+  if (!rfid.PICC_ReadCardSerial()) {
+    return;
+  }
+
+  // Dump debug info about the card; PICC_HaltA() is automatically called.
+  MFRC522Debug::PICC_DumpToSerial(rfid, Serial, &(rfid.uid));
+
+  delay(2000);
 }

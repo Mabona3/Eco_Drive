@@ -3,7 +3,7 @@
 #include "gps.h"
 #include "firebase.h"
 
-int FirebaseInit() {
+int Firebase_init() {
   /* Assigning Credentials */
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;

@@ -30,7 +30,7 @@ static HardwareSerial GPS_Serial(1);
 static TinyGPSPlus gps;
 static GPSdata gps_data;
 
-void GPSInit();
+void GPS_init();
 
 void GPS_read(void *pvParameters);
 

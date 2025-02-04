@@ -1,7 +1,7 @@
 #include "gps.h"
 #include "firebase.h"
 
-void GPSInit() {
+void GPS_init() {
   GPS_Serial.begin(9600, SERIAL_8N1, GPS_PIN_RX, GPS_PIN_TX);
 }
 

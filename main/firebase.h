@@ -9,7 +9,7 @@ static FirebaseData fbdo;
 static FirebaseAuth auth;
 static FirebaseConfig config;
 
-int FirebaseInit();
+int Firebase_init();
 void FirebaseGPS();
 
 #endif // FIREBASE_H

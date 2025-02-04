@@ -6,13 +6,15 @@
 #include "wifinet.h"
 #include "firebase.h"
 #include "gps.h"
+#include "rfid.h"
 #include "carStatus.h"
 
 void setup() {
   Serial.begin(115200);
-  WiFiInit();
-  FirebaseInit();
-  GPSInit();
+  WiFi_init();
+  Firebase_init();
+  GPS_init();
+  RFID_init();
   xTaskCreate(
     GPS_read,
     "Reading GPS", 
@@ -40,6 +42,14 @@ void setup() {
   xTaskCreate(
     TempSensor_read,
     "Reading GPS", 
+    10000,
+    NULL,
+    1,
+    NULL
+  );
+  xTaskCreate(
+    RFID_read,
+    "Reading RFID", 
     10000,
     NULL,
     1,

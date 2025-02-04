@@ -3,12 +3,15 @@
 
 #include <Arduino.h>
 #include <SPI.h>
-#include <MFRC522.h>
+#include <MFRC522v2.h>
+#include <MFRC522DriverSPI.h>
+#include <MFRC522DriverPinSimple.h>
+#include <MFRC522Debug.h>
 #include "constant.h"
 
-MFRC522 mfrc522(RFID_PIN_SS, RFID_PIN_RST);
-MFRC522::MIFARE_Key key;
-byte nuidPICC[4];
+static MFRC522DriverPinSimple ssPin(RFID_PIN_SS);
+static MFRC522DriverSPI spiDriver{ssPin};
+static MFRC522 rfid{spiDriver};
 
 void RFID_init();
 void RFID_read(void *pvParameters);
