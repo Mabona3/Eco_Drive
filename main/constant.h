@@ -13,3 +13,5 @@
 #define GPS_PIN_RX 2
 #define GPS_PIN_TX 0
 
+#define RFID_PIN_SS 15
+#define RFID_PIN_RST 2

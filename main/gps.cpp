@@ -24,8 +24,10 @@ void displayInfo() {
   gps_data.gps_time.second = gps.time.second();
   gps_data.gps_time.centisecond = gps.time.centisecond();
 
-  if (gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.date.day() != 0)
+  if (gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.date.day() != 0) {
+    Serial.println("Sending data to the firebase.");
     FirebaseGPS();
+  }
   else
     Serial.println("GPS data is not sent");
 
