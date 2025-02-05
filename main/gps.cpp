@@ -42,7 +42,7 @@ void processData() {
     json.add("time", timeData);
     json.add("date", dateData);
     message msg = {&json, "/gps"};
-    xQueueSend(queue, &msg, portMAX_DELAY);
+    xQueueSend(queue, &msg, 1000);
   }
   else {
     Serial.println("GPS data is not sent");

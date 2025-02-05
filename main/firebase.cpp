@@ -33,7 +33,7 @@ int Firebase_init() {
 void Firebase_task(void *pvParameters) {
   message msg;
   for (;;) {
-    if (xQueueReceive(queue, &msg, portMAX_DELAY)) {
+    if (xQueueReceive(queue, &msg, 1000)) {
       Serial.printf("Received message: %s\n", msg.url);
       if (Firebase.ready()) {
         Firebase.pushJSON(fbdo, msg.url, *msg.json);

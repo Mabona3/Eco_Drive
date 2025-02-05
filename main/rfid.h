@@ -17,7 +17,7 @@ static volatile bool RFID_detected = false;
 static SemaphoreHandle_t xSemaphore = NULL;
 
 
-void ARDUINO_ISR_ATTR RFID_isr();
+void ARDUINO_ISR_ATTR RFID_isr(void);
 void RFID_init();
 void RFID_read(void *pvParameters);
 

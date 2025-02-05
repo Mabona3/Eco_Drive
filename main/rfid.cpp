@@ -12,11 +12,12 @@ void RFID_read(void *pvParameters) {
   while (1) {
     // Take the semaphore signal from the isr
     Serial.println("Waiting for RFID");
-    if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
+    if (xSemaphoreTake(xSemaphore, 1000) == pdTRUE) {
+      Serial.println("RFID detected");
       RFID_detected = false;
 
       // check if new Card is put
-      if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+      if (rfid.PICC_IsNewCardPresent() || rfid.PICC_ReadCardSerial()) {
         Serial.print("Card UID: ");
         for (byte i = 0; i < rfid.uid.size; i++) {
           Serial.print(rfid.uid.uidByte[i], HEX);
@@ -29,7 +30,7 @@ void RFID_read(void *pvParameters) {
   }
 }
 
-void ARDUINO_ISR_ATTR RFID_isr() {
+void ARDUINO_ISR_ATTR RFID_isr(void) {
   RFID_detected = true;
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   xSemaphoreGiveFromISR(xSemaphore, &xHigherPriorityTaskWoken);
