@@ -13,5 +13,10 @@
 #define GPS_PIN_RX 2
 #define GPS_PIN_TX 0
 
-#define RFID_PIN_SS 15
-#define RFID_PIN_RST 2
+#define QUEUE_MAX 5
+
+#define RFID_PIN_SS 5
+#define RFID_PIN_RST 22
+#define RFID_PIN_IRQ 4
+// The Rfid read this sequence.
+// 30 4 26 EE 0 0 20 4E 0 0 70 0 0 0 0 0 0 0

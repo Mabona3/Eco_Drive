@@ -22,5 +22,3 @@ void RPMSensor_read(void *pvParameters) {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
-
-

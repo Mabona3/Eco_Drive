@@ -25,15 +25,15 @@ The connections is as follows in each component and the microcontroller:
 ### RFID
 
 
-| RFID | ESP32 |
-|:---:|:---:|
-| VCC | 3.3V |
-| GND | GND |
-| SDA | pin 21 |
-| SCK | pin 18 |
-| MOSI | pin 23 |
-| MISO | pin 19 |
-| RST | Not Connected |
-| IRQ | Not Connected |
+| RFID |  ESP32  |
+|:----:|:-------:|
+| VCC  |   3.3V  |
+| GND  |   GND   |
+|  SDA | pin 21  |
+|  SCK | pin 18  |
+| MOSI | pin 23  |
+| MISO | pin 19  |
+|  RST | pin 22  |
+|  IRQ | pin 4   |
 
 

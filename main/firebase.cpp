@@ -1,7 +1,9 @@
+#include <FirebaseESP32.h>
 #include <addons/TokenHelper.h>
 #include <addons/RTDBHelper.h>
 #include "gps.h"
 #include "firebase.h"
+#include "constant.h"
 
 int Firebase_init() {
   /* Assigning Credentials */
@@ -19,32 +21,24 @@ int Firebase_init() {
   Firebase.begin(&config, &auth);
 
   Firebase.setDoubleDigits(5);
+
+  queue = xQueueCreate(QUEUE_MAX, sizeof(message));
+
+  if (queue == NULL) {
+    Serial.println("Failed to create queue");
+    return 1;
+  }
 }
 
-void FirebaseGPS() {
-  if (Firebase.ready()) {
-    FirebaseJson locationData;
-    locationData.add("lat", gps_data.lat);
-    locationData.add("lng", gps_data.lng);
-
-
-    FirebaseJson timeData;
-    timeData.add("hour", gps_data.gps_time.hour);
-    timeData.add("minute", gps_data.gps_time.minute);
-    timeData.add("second", gps_data.gps_time.second);
-    timeData.add("centisecond", gps_data.gps_time.centisecond);
-
-    FirebaseJson dateData;
-    dateData.add("month", gps_data.gps_date.month);
-    dateData.add("day", gps_data.gps_date.day);
-    dateData.add("year", gps_data.gps_date.year);
-
-    FirebaseJson json;
-    json.add("location", locationData);
-    json.add("time", timeData);
-    json.add("date", dateData);
-
-    Firebase.pushJSON(fbdo, "/gps", json);
-
+void Firebase_task(void *pvParameters) {
+  message msg;
+  for (;;) {
+    if (xQueueReceive(queue, &msg, portMAX_DELAY)) {
+      Serial.printf("Received message: %s\n", msg.url);
+      if (Firebase.ready()) {
+        Firebase.pushJSON(fbdo, msg.url, *msg.json);
+        Serial.println("Message sent");
+      }
+    }
   }
 }

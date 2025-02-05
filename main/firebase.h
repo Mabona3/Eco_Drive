@@ -8,8 +8,15 @@
 static FirebaseData fbdo;
 static FirebaseAuth auth;
 static FirebaseConfig config;
+static QueueHandle_t queue;
+
+
+typedef struct {
+  FirebaseJson *json;
+  const char *url;
+} message;
 
 int Firebase_init();
-void FirebaseGPS();
+void Firebase_task(void *pvParameters);
 
 #endif // FIREBASE_H
