@@ -1,5 +1,9 @@
 # ECO-DRIVE
-This is a graduation project for our in CSE Minia University. This project focuses on the automotives and the environment. It is a system that can be installed in any car to monitor the car's performance and the driver's behavior. The system will give the driver feedback on how to drive more efficiently and will also monitor the car's performance and alert the driver if there is any problem with the car. The system will also monitor the car's emissions and alert the driver if the emissions are too high. 
+This is a graduation project for our in CSE Minia University. This project focuses on the automotives and the environment. 
+It is a system that can be installed in any car to monitor the car's performance and the driver's behavior.
+The system will give the driver feedback on how to drive more efficiently and will also monitor the car's 
+performance and alert the driver if there is any problem with the car.
+The system will also monitor the car's emissions and alert the driver if the emissions are too high. 
 The system will also have a mobile app that will allow the driver to monitor the car's performance and the driver's behavior remotely.
 The system will also have a web interface that will allow the driver to monitor the car's performance and the driver's behavior remotely.
 
@@ -37,3 +41,17 @@ The connections is as follows in each component and the microcontroller:
 |  IRQ | pin 4   |
 
 
+## Arduino's Implementation
+The Implementation of the Arduino is made in C-style in term of modules not classes and structures to handle the data sent between threads.
+The Implemented threads till now are the RFID thread, the GPS thread, the Firebase thread and a bunch of to-do's threads and they act as follows:
+
+### GPS
+The GPS thread is quite simple just read from the GPS every *specified* time and push the data in a queue that has the size that is *specified*.
+
+### RFID
+The RFID is running through interrupts it is closed by a semaphore that is triggered using the RFID key that open the semaphore, and it sends to the backend to
+switch the user to the RFID requested user and then close the semaphore.
+
+### Firebase
+The Firebase sends to the database if there's data in the queue if not it just waits.
+The queue is *xQueue* which means it makes atomic operations when modified no other task can modify it until the modification is finished.

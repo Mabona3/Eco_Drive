@@ -58,13 +58,13 @@ void setup() {
       NULL
       );
   xTaskCreate(
-  Firebase_task,
-  "Firebase Task",
-  2048,
-  NULL,
-  1,
-  NULL
-  );
+      Firebase_task,
+      "Firebase Task",
+      2048,
+      NULL,
+      1,
+      NULL
+      );
 }
 
 void loop() {}
