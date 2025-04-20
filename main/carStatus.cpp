@@ -5,20 +5,20 @@
 void FuelSensor_read(void *pvParameters) {
   while (1) {
     Serial.println("Fuel Sensor Reading");
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000);
   }
 }
 
 void TempSensor_read(void *pvParameters) {
   while (1) {
     Serial.println("Temp Sensor Reading");
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000);
   }
 }
 
 void RPMSensor_read(void *pvParameters) {
   while (1) {
     Serial.println("RPM Sensor Reading");
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000);
   }
 }

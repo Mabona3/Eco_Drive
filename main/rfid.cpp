@@ -25,6 +25,7 @@ void RFID_read(void *pvParameters) {
         }
         Serial.println();
         // TODO: What will happen with the RFID data
+        // The data will be sent to the backend or the firebase
       }
     }
   }

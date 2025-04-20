@@ -1,0 +1,8 @@
+-I/home/mabona3/.arduino15/packages/arduino/hardware/avr/1.8.6/libraries/SoftwareSerial/src/
+-I/home/mabona3/.arduino15/packages/arduino/hardware/avr/1.8.6/libraries/SPI/src/
+-I/home/mabona3/.arduino15/packages/esp32/hardware/esp32/3.1.1/libraries/WiFi/src/
+-I/home/mabona3/.arduino15/packages/esp32/hardware/esp32/3.1.1/libraries/BluetoothSerial/src/
+-I/home/mabona3/.arduino15/packages/esp32/hardware/esp32/3.1.1/libraries/BluetoothSerial/src/
+-I/home/mabona3/.arduino15/packages/esp32/hardware/esp32/3.1.1/cores/esp32/
+-I/home/mabona3/Arduino/libraries/Firebase_ESP32_Client/src/
+-I/home/mabona3/Arduino/libraries/FreeRTOS/src/
