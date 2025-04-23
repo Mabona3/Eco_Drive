@@ -1,9 +1,10 @@
-#include <FirebaseESP32.h>
-#include <addons/TokenHelper.h>
-#include <addons/RTDBHelper.h>
-#include "gps.h"
 #include "firebase.h"
+#include "Arduino.h"
 #include "constant.h"
+#include "gps.h"
+#include <FirebaseESP32.h>
+#include <addons/RTDBHelper.h>
+#include <addons/TokenHelper.h>
 
 int Firebase_init() {
   /* Assigning Credentials */
@@ -33,12 +34,18 @@ int Firebase_init() {
 void Firebase_task(void *pvParameters) {
   message msg;
   for (;;) {
-    if (xQueueReceive(queue, &msg, 1000)) {
+    if (xQueueReceive(queue, &msg, 0)) {
       Serial.printf("Received message: %s\n", msg.url);
+      // Checked it only returns the checking of the authentication of the
+      // firebase It is actually a boolean value in a struct that returns auth
+      // readiness The docs says: `This function should be called repeatedly
+      // to handle authentication tasks.` Which means this function should be
+      // in a loop i.e. no blocking
       if (Firebase.ready()) {
         Firebase.pushJSON(fbdo, msg.url, *msg.json);
         Serial.println("Message sent");
       }
     }
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }

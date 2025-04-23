@@ -1,3 +1,4 @@
+#include <freertos/FreeRTOS.h>
 #include "gps.h"
 #include "firebase.h"
 
@@ -7,6 +8,9 @@ void GPS_init() {
 
 void GPS_read(void *pvParameters) {
   for (;;) {
+    // This is also non blocking function it just a wrapper
+    // around uart_get_buff_len which get the length of 
+    // uart buffered data.
     if (GPS_Serial.available()) {
       char c = GPS_Serial.read();
       if (gps.encode(c)) {
