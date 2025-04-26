@@ -1,6 +1,5 @@
 #include "rfid.h"
 
-/* Public functions */
 void RFID_init() {
   SPI.begin();
   rfid.PCD_Init();
@@ -10,13 +9,11 @@ void RFID_init() {
 
 void RFID_read(void *pvParameters) {
   while (1) {
-    // Take the semaphore signal from the isr
     Serial.println("Waiting for RFID");
     if (xSemaphoreTake(xSemaphore, 1000) == pdTRUE) {
       Serial.println("RFID detected");
       RFID_detected = false;
 
-      // check if new Card is put
       if (rfid.PICC_IsNewCardPresent() || rfid.PICC_ReadCardSerial()) {
         Serial.print("Card UID: ");
         for (byte i = 0; i < rfid.uid.size; i++) {
@@ -24,8 +21,6 @@ void RFID_read(void *pvParameters) {
           Serial.print(" ");
         }
         Serial.println();
-        // TODO: What will happen with the RFID data
-        // The data will be sent to the backend or the firebase
       }
     }
   }
