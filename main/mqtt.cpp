@@ -1,10 +1,11 @@
-#include "mqtt.h"
-#include "esp32-hal.h"
-#include "rfid.h"
 #include <Arduino.h>
 #include <HardwareSerial.h>
+#include <esp32-hal.h>
 #include <esp_random.h>
 #include <freertos/FreeRTOS.h>
+
+#include "mqtt.h"
+#include "rfid.h"
 
 static WiFiClientSecure esp_client;
 static PubSubClient mqtt_client(esp_client);
@@ -39,9 +40,9 @@ void MQTT_init() {
     if (mqtt_client.connect(clientId.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) {
       Serial.println("Connected to MQTT broker");
     } else {
-      Serial.print("Failed to connect to MQTT broker, rc=");
-      Serial.print(mqtt_client.state());
-      Serial.println("Retrying in 1 seconds.");
+      Serial.printf(
+          "Failed to connect to MQTT broker, rc=%d Retrying in 1 sec.",
+          mqtt_client.state());
       delay(1000);
     }
   }
@@ -52,11 +53,14 @@ void MQTT_task(void *pvParams) {
   mqttData msg;
   for (;;) {
     if (mqtt_client.connected()) {
-      if (xQueueReceive(mqttQueue, &msg, 0)) {
+      if (xQueueReceive(mqttQueue, &msg, 200 / portTICK_PERIOD_MS)) {
+        Serial.print("Publishing: ");
         Serial.print(mqtt_topic);
         Serial.print(": ");
         Serial.println(msg.data);
-        // mqtt_client.publish(topic, msg.data);
+        mqtt_client.publish(mqtt_topic.c_str(), msg.data);
+        Serial.println("Published");
+        mqtt_client.loop();
       }
     }
     vTaskDelay(2000 / portTICK_PERIOD_MS);
