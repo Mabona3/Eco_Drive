@@ -5,9 +5,6 @@
 #include <HardwareSerial.h>
 #include <TinyGPSPlus.h>
 
-static HardwareSerial GPS_Serial(1);
-static TinyGPSPlus gps;
-
 void GPS_init();
 void GPS_read(void *pvParameters);
 void processData();

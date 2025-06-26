@@ -1,7 +1,16 @@
 #include "rfid.h"
-#include "HardwareSerial.h"
+#include "mqtt.h"
+#include <HardwareSerial.h>
 
-bool rfid_connected = false;
+static MFRC522DriverPinSimple ssPin(RFID_PIN_SS);
+static SPIClass &spiClass = SPI;
+static const SPISettings spiSettings =
+    SPISettings(SPI_CLOCK_DIV4, MSBFIRST, SPI_MODE0);
+static MFRC522DriverSPI spiDriver{ssPin, spiClass, spiSettings};
+
+MFRC522 rfid{spiDriver};
+
+bool RFID_anonymous = false;
 
 void RFID_init() {
   SPI.begin();
@@ -10,19 +19,10 @@ void RFID_init() {
 
 void RFID_read(void *pvParameters) {
   for (;;) {
-    // Removed the interrupts and semaphore polling this is the simple way of
-    // doing this however this way sends and recieves via SPI which makes a
-    // delay of 1ms~2ms
     if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
       Serial.println("RFID detected");
-      Serial.print("Card UID: ");
-      Serial.println(rfid.uid.size);
-      Serial.print("\"");
-      for (int i = 0; i < rfid.uid.size; i++) {
-        Serial.print(rfid.uid.uidByte[i], HEX);
-        Serial.print(" ");
-      }
-      Serial.println("\"");
+      RFID_anonymous = true;
+      MQTT_changeTopic();
     }
     vTaskDelay(5000 / portTICK_PERIOD_MS);
   }

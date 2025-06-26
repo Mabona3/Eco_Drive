@@ -1,6 +1,11 @@
 #include "gps.h"
-#include "HardwareSerial.h"
+#include "mqtt.h"
+#include <HardwareSerial.h>
+#include <esp32-hal.h>
 #include <freertos/FreeRTOS.h>
+
+static HardwareSerial GPS_Serial(1);
+static TinyGPSPlus gps;
 
 void GPS_init() { GPS_Serial.begin(9600, SERIAL_8N1, GPS_PIN_RX, GPS_PIN_TX); }
 
@@ -16,11 +21,23 @@ void GPS_read(void *pvParameters) {
 }
 
 void displayInfo();
-void uploadData() {}
+
+// The upload data will be in the following:
+// "{"lng": 1.23456, "lat": 1.23456}" char of 32 byte
+// can increase to 34 as the max lng and lat is 90.
+void uploadData() {
+  mqttData data;
+  snprintf(data.data, 64, "{\"lng\": %lf, \"lat\": %lf}", gps.location.lng(),
+           gps.location.lat());
+
+  xQueueSend(mqttQueue, &data, 500 / portTICK_PERIOD_MS);
+}
 
 void processData() {
-  displayInfo();
-  uploadData();
+  if (gps.location.isValid())
+    uploadData();
+  if (Serial)
+    displayInfo();
 }
 
 void displayInfo() {

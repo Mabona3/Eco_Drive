@@ -1,13 +1,18 @@
-/* 1. Define the WiFi credentials */
+// These are data you should provide before compiling the code to ensure every
+// thing is ok the default of pins are found in readme.
+
 #define WIFI_SSID
 #define WIFI_PASSWORD
 
-#define API_KEY
-#define DATABASE_URL
+#define MQTT_URL
+#define MQTT_PORT
+#define MQTT_USERNAME
+#define MQTT_PASSWORD
 
-#define USER_EMAIL
-#define USER_PASSWORD
+#define GPS_PIN_RX
+#define GPS_PIN_TX
 
-#define GPS_PIN_RX 2
-#define GPS_PIN_TX 3
+#define QUEUE_MAX
 
+#define RFID_PIN_SS
+#define RFID_PIN_RST

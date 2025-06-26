@@ -29,6 +29,20 @@ void setup() {
     NULL,
     1,
     NULL);
+  xTaskCreate(
+    MQTT_task,
+    "Reading RFID",
+    2048,
+    NULL,
+    1,
+    NULL);
+  // xTaskCreate(
+  //   FuelSensor_read,
+  //   "Reading RFID",
+  //   2048,
+  //   NULL,
+  //   1,
+  //   NULL);
 }
 
 void loop() {

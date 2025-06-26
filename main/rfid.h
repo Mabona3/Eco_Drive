@@ -9,12 +9,8 @@
 #include <MFRC522v2.h>
 #include <SPI.h>
 
-static MFRC522DriverPinSimple ssPin(RFID_PIN_SS);
-static SPIClass &spiClass = SPI;
-static const SPISettings spiSettings =
-    SPISettings(SPI_CLOCK_DIV4, MSBFIRST, SPI_MODE0);
-static MFRC522DriverSPI spiDriver{ssPin, spiClass, spiSettings};
-static MFRC522 rfid{spiDriver};
+extern MFRC522 rfid;
+extern bool RFID_anonymous;
 
 void RFID_init();
 void RFID_read(void *pvParameters);
