@@ -1,5 +1,5 @@
 # ECO-DRIVE
-This is a graduation project for our in CSE Minia University. This project focuses on the automotives and the environment. 
+This is a graduation project in CSE Minia University. This project focuses on the automotives and the environment. 
 It is a system that can be installed in any car to monitor the car's performance and the driver's behavior.
 The system will give the driver feedback on how to drive more efficiently and will also monitor the car's 
 performance and alert the driver if there is any problem with the car.
@@ -22,8 +22,8 @@ The connections is as follows in each component and the microcontroller:
 |:---:|:---:|
 | VCC | 5V |
 | GND | GND |
-| RX | pin 2 |
-| TX | pin 0 |
+| RX | pin 0 |
+| TX | pin 2 |
 
 
 ### RFID
@@ -33,12 +33,12 @@ The connections is as follows in each component and the microcontroller:
 |:----:|:-------:|
 | VCC  |   3.3V  |
 | GND  |   GND   |
-|  SDA | pin 21  |
+|  SDA | pin 5   |
 |  SCK | pin 18  |
 | MOSI | pin 23  |
 | MISO | pin 19  |
 |  RST | pin 22  |
-|  IRQ | pin 4   |
+|  IRQ | pin -   |
 
 
 ## Arduino's Implementation
