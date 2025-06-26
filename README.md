@@ -43,7 +43,7 @@ The connections is as follows in each component and the microcontroller:
 
 ## Arduino's Implementation
 The Implementation of the Arduino is made in C-style in term of modules not classes and structures to handle the data sent between threads.
-The Implemented threads till now are the RFID thread, the GPS thread, the Firebase thread and a bunch of to-do's threads and they act as follows:
+The Implemented threads till now are the RFID thread, the GPS thread.
 
 ### GPS
 The GPS thread is quite simple just read from the GPS every *specified* time and push the data in a queue that has the size that is *specified*.
