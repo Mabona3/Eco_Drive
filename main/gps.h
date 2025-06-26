@@ -11,6 +11,5 @@ static TinyGPSPlus gps;
 void GPS_init();
 void GPS_read(void *pvParameters);
 void processData();
-void displayInfo();
 
 #endif

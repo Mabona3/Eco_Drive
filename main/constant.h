@@ -12,8 +12,8 @@
 #define USER_EMAIL "mazenkhaled2003@gmail.com"
 #define USER_PASSWORD "12345678"
 
-#define GPS_PIN_RX 2
-#define GPS_PIN_TX 0
+#define GPS_PIN_RX 17
+#define GPS_PIN_TX 16
 
 #define QUEUE_MAX 5
 

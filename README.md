@@ -18,12 +18,12 @@ The system will consist of the following components:
 The connections is as follows in each component and the microcontroller:
 ### GPS
 
-| GPS | ESP32 |
-|:---:|:---:|
-| VCC | 5V |
-| GND | GND |
-| RX | pin 0 |
-| TX | pin 2 |
+| GPS | ESP32  |
+|:---:|:------:|
+| VCC |   5V   |
+| GND |  GND   |
+| RX  | pin 16 |
+| TX  | pin 17 |
 
 
 ### RFID
@@ -52,6 +52,3 @@ The GPS thread is quite simple just read from the GPS every *specified* time and
 The RFID is running through interrupts it is closed by a semaphore that is triggered using the RFID key that open the semaphore, and it sends to the backend to
 switch the user to the RFID requested user and then close the semaphore.
 
-### Firebase
-The Firebase sends to the database if there's data in the queue if not it just waits.
-The queue is *xQueue* which means it makes atomic operations when modified no other task can modify it until the modification is finished.

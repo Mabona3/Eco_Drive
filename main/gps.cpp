@@ -7,22 +7,20 @@ void GPS_init() { GPS_Serial.begin(9600, SERIAL_8N1, GPS_PIN_RX, GPS_PIN_TX); }
 void GPS_read(void *pvParameters) {
   for (;;) {
     Serial.println("Searching GPS...");
-    if (GPS_Serial.available()) {
-      Serial.println("GPS: ");
-
-      if (gps.encode(GPS_Serial.read()))
-        processData();
-
-    } else {
-      Serial.println("GPS not available...");
+    while (GPS_Serial.available()) {
+      gps.encode(GPS_Serial.read());
     }
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    processData();
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
   }
 }
 
+void displayInfo();
+void uploadData() {}
+
 void processData() {
   displayInfo();
-  // TODO: Update this to upload via the mqtt
+  uploadData();
 }
 
 void displayInfo() {

@@ -24,6 +24,6 @@ void RFID_read(void *pvParameters) {
       }
       Serial.println("\"");
     }
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
   }
 }
