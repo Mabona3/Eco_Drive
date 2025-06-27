@@ -32,10 +32,17 @@ void setup() {
   xTaskCreate(
     MQTT_task,
     "Upload MQTT",
-    4096,
+    8192,
     NULL,
     1,
     NULL);
+  // xTaskCreate(
+  //   FuelSensor_read,
+  //   "Fuel Sensor",
+  //   2048,
+  //   NULL,
+  //   1,
+  //   NULL);
 }
 
 void loop() {

@@ -11,7 +11,6 @@ void GPS_init() { GPS_Serial.begin(9600, SERIAL_8N1, GPS_PIN_RX, GPS_PIN_TX); }
 
 void GPS_read(void *pvParameters) {
   for (;;) {
-    Serial.println("Searching GPS...");
     while (GPS_Serial.available()) {
       gps.encode(GPS_Serial.read());
     }

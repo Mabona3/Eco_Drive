@@ -10,7 +10,7 @@ static MFRC522DriverSPI spiDriver{ssPin, spiClass, spiSettings};
 
 MFRC522 rfid{spiDriver};
 
-bool RFID_anonymous = false;
+bool RFID_changed = false;
 
 void RFID_init() {
   SPI.begin();
@@ -21,8 +21,7 @@ void RFID_read(void *pvParameters) {
   for (;;) {
     if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
       Serial.println("RFID detected");
-      RFID_anonymous = true;
-      MQTT_changeTopic();
+      RFID_changed = true;
     }
     vTaskDelay(5000 / portTICK_PERIOD_MS);
   }

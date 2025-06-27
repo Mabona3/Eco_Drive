@@ -13,8 +13,6 @@ typedef struct {
 extern QueueHandle_t mqttQueue;
 
 void MQTT_init();
-void MQTT_close();
 void MQTT_task(void *pvParams);
-void MQTT_changeTopic();
 
 #endif // MQTT_H

@@ -10,7 +10,7 @@
 #include <SPI.h>
 
 extern MFRC522 rfid;
-extern bool RFID_anonymous;
+extern bool RFID_changed;
 
 void RFID_init();
 void RFID_read(void *pvParameters);
