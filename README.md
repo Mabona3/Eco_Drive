@@ -1,54 +1,84 @@
 # ECO-DRIVE
-This is a graduation project in CSE Minia University. This project focuses on the automotives and the environment. 
-It is a system that can be installed in any car to monitor the car's performance and the driver's behavior.
-The system will give the driver feedback on how to drive more efficiently and will also monitor the car's 
-performance and alert the driver if there is any problem with the car.
-The system will also monitor the car's emissions and alert the driver if the emissions are too high. 
-The system will also have a mobile app that will allow the driver to monitor the car's performance and the driver's behavior remotely.
-The system will also have a web interface that will allow the driver to monitor the car's performance and the driver's behavior remotely.
 
-## System Components
-The system will consist of the following components:
-1. OBD-II Interface: This is a device that will be installed in the car and will read data from the car's OBD-II port. The OBD-II port is a standard port that is present in all cars manufactured after 1996. The OBD-II interface will read data from the car's engine control unit (ECU) and will send this data to the system's main unit.
-2. Main Unit: This is the main unit of the system and will be installed in the car. It will receive data from the OBD-II interface and will process this data to monitor the car's performance and the driver's behavior. It will also send alerts to the driver if there is any problem with the car or if the emissions are too high.
-3. Mobile App: This is a mobile app that will allow the driver to monitor the car's performance and the driver's behavior remotely. The app will also allow the driver to receive alerts from the system and to control the system remotely.
-4. Web Interface: This is a web interface that will allow the driver to monitor the car's performance and the driver's behavior remotely. The web interface will also allow the driver to receive alerts from the system and to control the system remotely.
+**Graduation Project – Computer Science & Engineering – Minia University**
 
-## Connection Diagram
-The connections is as follows in each component and the microcontroller:
-### GPS
+**Eco-Drive** is an intelligent automotive system designed to promote environmentally conscious driving and enhance vehicle diagnostics. 
+It can be installed in any car to monitor engine performance, driving behavior, and emission levels.
+The system provides real-time feedback to help drivers improve fuel efficiency and reduce harmful emissions.
+Additionally, it offers remote monitoring through both a mobile app and a web interface.
 
-| GPS | ESP32  |
-|:---:|:------:|
-| VCC |   5V   |
-| GND |  GND   |
-| RX  | pin 16 |
-| TX  | pin 17 |
+---
 
+## 🔧 System Overview
 
-### RFID
+Eco-Drive consists of the following components:
 
+### 1. OBD-II Interface
+A standard device that connects to the vehicle's OBD-II port (available in cars manufactured after 1996). It collects real-time diagnostic and performance data from the car’s ECU (Engine Control Unit).
 
-| RFID |  ESP32  |
-|:----:|:-------:|
-| VCC  |   3.3V  |
-| GND  |   GND   |
-|  SDA | pin 5   |
-|  SCK | pin 18  |
-| MOSI | pin 23  |
-| MISO | pin 19  |
-|  RST | pin 22  |
-|  IRQ | pin -   |
+### 2. Main Control Unit (ESP32)
+The core microcontroller of the system:
+- Receives and processes data from the OBD-II interface.
+- Evaluates vehicle performance, driver behavior, and emission data.
+- Sends alerts and diagnostic reports to the driver.
+- Interfaces with GPS and RFID modules for location tracking and user authentication.
 
+### 3. Mobile App
+A smartphone application that:
+- Displays driving behavior and vehicle status.
+- Receives alerts (e.g., high emissions, driving issues).
+- Provides remote access and control features.
 
-## Arduino's Implementation
-The Implementation of the Arduino is made in C-style in term of modules not classes and structures to handle the data sent between threads.
-The Implemented threads till now are the RFID thread, the GPS thread.
+### 4. Web Interface
+A responsive web dashboard that mirrors the functionality of the mobile app for broader accessibility:
+- Remote access to vehicle data and analytics.
+- Driver performance history.
+- Maintenance notifications and system alerts.
 
-### GPS
-The GPS thread is quite simple just read from the GPS every *specified* time and push the data in a queue that has the size that is *specified*.
+---
 
-### RFID
-The RFID is running through interrupts it is closed by a semaphore that is triggered using the RFID key that open the semaphore, and it sends to the backend to
-switch the user to the RFID requested user and then close the semaphore.
+## 📡 Connection Diagram
+
+### GPS Module Connection
+
+| GPS Pin | ESP32 Pin |
+|--------:|:----------:|
+| VCC     | 5V         |
+| GND     | GND        |
+| RX      | GPIO 16    |
+| TX      | GPIO 17    |
+
+### RFID Module Connection
+
+| RFID Pin | ESP32 Pin |
+|:--------:|:-----------:|
+| VCC      | 3.3V        |
+| GND      | GND         |
+| SDA      | GPIO 5      |
+| SCK      | GPIO 18     |
+| MOSI     | GPIO 23     |
+| MISO     | GPIO 19     |
+| RST      | GPIO 22     |
+| IRQ      | Not used    |
+
+---
+
+## 💻 Firmware Design (Arduino Style)
+
+The firmware is implemented in C-style using modular programming rather than object-oriented design. 
+Each module handles a specific task and communicates via message queues and synchronization primitives (e.g., semaphores).
+
+### 🛰 GPS Thread
+
+- Periodically reads data from the GPS module.
+- Pushes location data into a fixed-size queue for use by other system components (e.g., logging, backend sync).
+
+### 🛂 RFID Thread
+
+- Periodically reads data from the tag.
+- Sends user data to the backend to identify or switch the active user.
+
+---
+
+This system aims to bridge the gap between sustainable driving and modern automotive technology, empowering drivers to make smarter, greener decisions.
 
