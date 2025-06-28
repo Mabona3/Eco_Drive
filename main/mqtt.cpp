@@ -1,10 +1,10 @@
-#include <Arduino.h>
 #include <HardwareSerial.h>
 #include <esp32-hal.h>
 #include <esp_random.h>
 #include <freertos/FreeRTOS.h>
 
 #include "mqtt.h"
+#include "queue_prepare.h"
 #include "rfid.h"
 
 static WiFiClientSecure esp_client;
@@ -12,6 +12,7 @@ static PubSubClient mqtt_client;
 static String mqtt_topic;
 QueueHandle_t mqttQueue = NULL;
 
+// private function.
 void _MQTT_connect();
 
 void MQTT_reconnect() {
@@ -34,10 +35,7 @@ void MQTT_reconnect() {
   _MQTT_connect();
 }
 
-void MQTT_init() {
-  mqttQueue = xQueueCreate(QUEUE_MAX, sizeof(mqttData));
-  MQTT_reconnect();
-}
+void MQTT_init() { MQTT_reconnect(); }
 
 void _MQTT_connect() {
   esp_client.setInsecure();
@@ -65,8 +63,8 @@ void _MQTT_connect() {
 }
 
 // MQTT Task collect the data in a queue and then publish it.
-void MQTT_task(void *pvParams) {
-  mqttData msg;
+void MQTT_task(void *pvParameters) {
+  queueData msg;
   for (;;) {
     if (RFID_changed) {
       RFID_changed = false;
@@ -77,8 +75,10 @@ void MQTT_task(void *pvParams) {
         mqtt_client.publish(
             String("vehicles/" + mqtt_topic + "/telementry").c_str(), msg.data);
         mqtt_client.loop();
+      } else {
+        Serial.println("No Messages");
       }
     }
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
   }
 }
