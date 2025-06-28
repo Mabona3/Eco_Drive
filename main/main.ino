@@ -8,13 +8,20 @@
 #include "rfid.h"
 #include "carStatus.h"
 #include "mqtt.h"
+#include "queue_prepare.h"
+
+void InitAll();
 
 void setup() {
   Serial.begin(115200);
-  WiFi_init();
-  GPS_init();
-  RFID_init();
-  MQTT_init();
+  InitAll();
+  xTaskCreate(
+    QueuePrepare_task,
+    "Data Prepare Task",
+    2048,
+    NULL,
+    1,
+    NULL);
   xTaskCreate(
     GPS_read,
     "Reading GPS",
@@ -25,9 +32,9 @@ void setup() {
   xTaskCreate(
     RFID_read,
     "Reading RFID",
-    2048,
+    1024,
     NULL,
-    1,
+    2,
     NULL);
   xTaskCreate(
     MQTT_task,
@@ -36,14 +43,23 @@ void setup() {
     NULL,
     1,
     NULL);
-  // xTaskCreate(
-  //   FuelSensor_read,
-  //   "Fuel Sensor",
-  //   2048,
-  //   NULL,
-  //   1,
-  //   NULL);
+  xTaskCreate(
+    CarStatus_task,
+    "Car Status",
+    2048,
+    NULL,
+    1,
+    NULL);
 }
 
 void loop() {
+}
+
+void InitAll() {
+  WiFi_init();
+  GPS_init();
+  RFID_init();
+  MQTT_init();
+  QueuePrepare_init();
+  CarStatus_init();
 }
