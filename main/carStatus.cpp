@@ -34,6 +34,7 @@ const char *PID_LIST[] = {
     "010F", // Intake air temperature
     "0110"  // MAF air flow rate
 };
+
 const int NUM_PIDS = 8;
 int currentPidIndex = 0;
 
@@ -44,6 +45,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     if (advertisedDevice.getAddress().toString() == ELM_ADDRESS ||
         advertisedDevice.getName() == ELM_NAME) {
+      Serial.println("ELM Found");
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
       doScan = false;
@@ -53,9 +55,13 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
 };
 
 class MyClientCallback : public BLEClientCallbacks {
-  void onConnect(BLEClient *pclient) { deviceConnected = true; }
+  void onConnect(BLEClient *pclient) {
+    Serial.println("ELM Connected Successfully");
+    deviceConnected = true;
+  }
 
   void onDisconnect(BLEClient *pclient) {
+    Serial.println("ELM Disconnected...");
     deviceConnected = false;
     doScan = true;
   }
@@ -75,6 +81,7 @@ void CarStatus_init() {
   BLEDevice::init("ESP32_OBD_Reader");
   pClient = BLEDevice::createClient();
   pClient->setClientCallbacks(new MyClientCallback());
+  Serial.println("Client Created and Starting Scanning");
   startScanning();
 }
 
@@ -84,25 +91,32 @@ void CarStatus_task(void *pvParameters) {
     if (doConnect) {
       if (connectToELM327()) {
         doConnect = false;
+      } else {
+        Serial.println("ELM Connection failed");
       }
     }
 
     // Auto-reconnect if disconnected
     if (!deviceConnected && doScan) {
+      Serial.println("Starting Scanning");
       startScanning();
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
 
     for (int i = 0; i < NUM_PIDS; i++) {
-      if (deviceConnected)
+      if (deviceConnected) {
         requestNextPID();
-      else
+        Serial.printf("Scanning pid %s\n", PID_LIST[currentPidIndex]);
+      } else {
+        Serial.println("No Device Connected");
         break;
+      }
     }
 
-    if (xSemaphoreTake(ecoDriveMutex, 100)) {
+    if (xSemaphoreTake(EcoDriveMutex, 100)) {
+      ecoDriveData.obd_valid = deviceConnected;
       ecoDriveData.obd_data = obdData;
-      xSemaphoreGive(ecoDriveMutex);
+      xSemaphoreGive(EcoDriveMutex);
     }
 
     vTaskDelay(2000 / portTICK_PERIOD_MS);

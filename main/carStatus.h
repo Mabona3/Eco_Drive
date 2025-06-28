@@ -1,13 +1,10 @@
 #ifndef CARSTATUS_H
 #define CARSTATUS_H
 
-#include "BLEAdvertisedDevice.h"
-#include "BLEDevice.h"
-#include "BLEScan.h"
-#include "BLEUtils.h"
-
-// Connection status
-extern bool deviceConnected = false;
+#include <BLEAdvertisedDevice.h>
+#include <BLEDevice.h>
+#include <BLEScan.h>
+#include <BLEUtils.h>
 
 // OBD data storage
 typedef struct {
