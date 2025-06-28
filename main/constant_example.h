@@ -13,6 +13,7 @@
 #define GPS_PIN_TX
 
 #define QUEUE_MAX
+#define MQTT_MSG_MAX_LEN
 
 #define RFID_PIN_SS
 #define RFID_PIN_RST
