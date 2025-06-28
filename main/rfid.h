@@ -2,7 +2,6 @@
 #define RFID_H
 
 #include "constant.h"
-#include <Arduino.h>
 #include <MFRC522Debug.h>
 #include <MFRC522DriverPinSimple.h>
 #include <MFRC522DriverSPI.h>
