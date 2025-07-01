@@ -1,218 +1,259 @@
 #include "carStatus.h"
+#include "NimBLEScan.h"
 #include "queue_prepare.h"
 
-BLEClient *pClient;
-BLEAdvertisedDevice *myDevice;
+#include <NimBLEDevice.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#include <freertos/task.h>
 
-void startScanning();
-bool connectToELM327();
-void requestNextPID();
-bool sendCommand(String command);
-void processResponse(const char *pid, String response);
+const char *ELM_ADDRESS = "00:10:cc:4f:36:03";
+const char *ELM_NAME = "ELM327";
 
-// ELM327 device settings
-#define ELM_ADDRESS "00:10:cc:4f:36:03" // Your ELM327 BLE MAC address
-#define ELM_NAME "ELM327"               // Alternative: scan by name
+static NimBLEScan *pBLEScan;
+static NimBLEClient *pClient;
+static NimBLERemoteService *pRemoteService;
+static NimBLERemoteCharacteristic *pRemoteCharacteristic;
+static NimBLEAdvertisedDevice *myDevice = nullptr;
 
-// Connection status
-bool deviceConnected = false;
-bool doConnect = false;
-bool doScan = true;
+static volatile bool deviceConnected = false;
+static volatile bool doConnect = false;
 
-// Response handling
-String responseData = "";
-bool responseReady = false;
+#define RESPONSE_BUF_SIZE 128
+static char responseData[RESPONSE_BUF_SIZE];
+static volatile bool responseReady = false;
+static bool expectingResponse = false;
+static SemaphoreHandle_t xResponseSemaphore = NULL;
+static SemaphoreHandle_t xResponseMutex = NULL;
 
-// OBD-II PIDs
-const char *PID_LIST[] = {
-    "010C", // Engine RPM
-    "010D", // Vehicle speed
-    "0105", // Engine coolant temperature
-    "0104", // Calculated engine load
-    "012F", // Fuel level input
-    "0111", // Throttle position
-    "010F", // Intake air temperature
-    "0110"  // MAF air flow rate
-};
-
-const int NUM_PIDS = 8;
-int currentPidIndex = 0;
+const char *PID_LIST[] = {"010C", "010D", "0105", "0104",
+                          "012F", "0111", "010F", "0110"};
+const int NUM_PIDS = sizeof(PID_LIST) / sizeof(PID_LIST[0]);
 
 OBDData obdData;
 
-// Callbacks
-class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
-  void onResult(BLEAdvertisedDevice advertisedDevice) {
-    if (advertisedDevice.getAddress().toString() == ELM_ADDRESS ||
-        advertisedDevice.getName() == ELM_NAME) {
-      Serial.println("ELM Found");
-      myDevice = new BLEAdvertisedDevice(advertisedDevice);
+const int DATA_REQUEST_INTERVAL_MS = 100;
+int currentPidIndex = 0;
+
+int hexToInt(const char *hex);
+bool sendPIDRequest(const char *pid);
+void obd_module_setup();
+bool connectToELM327();
+bool sendCommand(const char *command, uint32_t timeout = 1000);
+void processPIDResponse(const char *pid, const char *response);
+static void notifyCallback(NimBLERemoteCharacteristic *pBLERemoteCharacteristic,
+                           uint8_t *pData, size_t length, bool isNotify);
+
+class MyAdvertisedDeviceCallbacks : public NimBLEScanCallbacks {
+  void onResult(NimBLEAdvertisedDevice *advertisedDevice) {
+    if (advertisedDevice->getAddress().toString() == ELM_ADDRESS ||
+        advertisedDevice->getName() == ELM_NAME) {
+      if (pBLEScan->isScanning())
+        pBLEScan->stop();
+
+      if (myDevice) {
+        delete myDevice;
+        myDevice = nullptr;
+      }
+
+      myDevice = new NimBLEAdvertisedDevice(*advertisedDevice);
       doConnect = true;
-      doScan = false;
-      advertisedDevice.getScan()->stop();
     }
   }
 };
 
-class MyClientCallback : public BLEClientCallbacks {
-  void onConnect(BLEClient *pclient) {
-    Serial.println("ELM Connected Successfully");
-    deviceConnected = true;
-  }
+class MyClientCallback : public NimBLEClientCallbacks {
+  void onConnect(NimBLEClient *pclient) { deviceConnected = true; }
 
-  void onDisconnect(BLEClient *pclient) {
-    Serial.println("ELM Disconnected...");
-    deviceConnected = false;
-    doScan = true;
-  }
+  void onDisconnect(NimBLEClient *pclient) { deviceConnected = false; }
 };
 
-static void notifyCallback(BLERemoteCharacteristic *pBLERemoteCharacteristic,
+static void notifyCallback(NimBLERemoteCharacteristic *pBLERemoteCharacteristic,
                            uint8_t *pData, size_t length, bool isNotify) {
-  for (int i = 0; i < length; i++) {
-    responseData += (char)pData[i];
-  }
-  if (responseData.indexOf('>') >= 0) {
-    responseReady = true;
+  if (length == 0 || length >= RESPONSE_BUF_SIZE)
+    return;
+
+  if (xSemaphoreTake(xResponseMutex, portMAX_DELAY) == pdTRUE) {
+    if (expectingResponse) {
+      memcpy(responseData, pData, length);
+      responseData[length] = '\0';
+
+      char *end = responseData + length;
+      while (end > responseData &&
+             (*end == '\0' || *end == '>' || isspace(*end))) {
+        *end-- = '\0';
+      }
+
+      responseReady = true;
+      expectingResponse = false;
+      xSemaphoreGive(xResponseSemaphore);
+    }
+    xSemaphoreGive(xResponseMutex);
   }
 }
 
 void CarStatus_init() {
-  BLEDevice::init("ESP32_OBD_Reader");
+  BLEDevice::init("ESP32_ELM_Scanner");
   pClient = BLEDevice::createClient();
   pClient->setClientCallbacks(new MyClientCallback());
-  Serial.println("Client Created and Starting Scanning");
-  startScanning();
+
+  pBLEScan = BLEDevice::getScan();
+  pBLEScan->setScanCallbacks(new MyAdvertisedDeviceCallbacks());
+  pBLEScan->setActiveScan(true);
+  pBLEScan->start(0, true);
 }
 
 void CarStatus_task(void *pvParameters) {
-  // Handle connection
   for (;;) {
     if (doConnect) {
-      if (connectToELM327()) {
-        doConnect = false;
-      } else {
-        Serial.println("ELM Connection failed");
+      connectToELM327();
+      doConnect = false;
+    }
+
+    if (deviceConnected) {
+      for (int i = 0; i < NUM_PIDS; i++) {
+        sendPIDRequest(PID_LIST[currentPidIndex]);
       }
+    } else {
+      doConnect = true;
     }
-
-    // Auto-reconnect if disconnected
-    if (!deviceConnected && doScan) {
-      Serial.println("Starting Scanning");
-      startScanning();
-      vTaskDelay(2000 / portTICK_PERIOD_MS);
-    }
-
-    for (int i = 0; i < NUM_PIDS; i++) {
-      if (deviceConnected) {
-        requestNextPID();
-        Serial.printf("Scanning pid %s\n", PID_LIST[currentPidIndex]);
-      } else {
-        Serial.println("No Device Connected");
-        break;
-      }
-    }
-
-    if (xSemaphoreTake(EcoDriveMutex, 100)) {
-      ecoDriveData.obd_valid = deviceConnected;
+    if (xSemaphoreTake(EcoDriveMutex, portMAX_DELAY)) {
       ecoDriveData.obd_data = obdData;
       xSemaphoreGive(EcoDriveMutex);
+      vTaskDelay(pdMS_TO_TICKS(100));
     }
 
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(2000));
   }
-}
-
-void startScanning() {
-  BLEScan *pBLEScan = BLEDevice::getScan();
-  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-  pBLEScan->setActiveScan(true);
-  pBLEScan->start(5);
 }
 
 bool connectToELM327() {
-  if (!pClient->connect(myDevice))
+  if (!myDevice || !pClient->connect(myDevice)) {
     return false;
+  }
 
-  BLERemoteService *pRemoteService =
-      pClient->getService(BLEUUID("0000fff0-0000-1000-8000-00805f9b34fb"));
+  static const NimBLEUUID serviceUUIDs[] = {
+      NimBLEUUID("0000fff0-0000-1000-8000-00805f9b34fb"),
+      NimBLEUUID("6e400001-b5a3-f393-e0a9-e50e24dcca9e")};
+
+  for (const auto &uuid : serviceUUIDs) {
+    if ((pRemoteService = pClient->getService(uuid)))
+      break;
+  }
   if (!pRemoteService)
     return false;
 
-  BLERemoteCharacteristic *pRemoteCharacteristic =
-      pRemoteService->getCharacteristic(
-          BLEUUID("0000fff1-0000-1000-8000-00805f9b34fb"));
+  static const NimBLEUUID charUUIDs[] = {
+      NimBLEUUID("0000fff1-0000-1000-8000-00805f9b34fb"),
+      NimBLEUUID("6e400002-b5a3-f393-e0a9-e50e24dcca9e")};
+
+  for (const auto &uuid : charUUIDs) {
+    if ((pRemoteCharacteristic = pRemoteService->getCharacteristic(uuid)))
+      break;
+  }
   if (!pRemoteCharacteristic)
     return false;
 
-  if (pRemoteCharacteristic->canNotify()) {
-    pRemoteCharacteristic->registerForNotify(notifyCallback);
-  } else {
+  if (!pRemoteCharacteristic->subscribe(true, notifyCallback)) {
     return false;
   }
 
-  // Initialize ELM327
-  sendCommand("ATZ");
-  delay(1000);
-  sendCommand("ATE0");
-  sendCommand("ATL0");
-  sendCommand("ATSP0");
-
-  return true;
+  return sendCommand("ATZ", 3000) && sendCommand("ATE0") &&
+         sendCommand("ATL0") && sendCommand("ATSP0");
 }
 
-bool sendCommand(String command) {
-  responseData = "";
-  responseReady = false;
+bool sendCommand(const char *command, uint32_t timeout) {
+  if (!deviceConnected || !pRemoteCharacteristic)
+    return false;
 
-  BLERemoteService *pRemoteService =
-      pClient->getService(BLEUUID("0000fff0-0000-1000-8000-00805f9b34fb"));
-  BLERemoteCharacteristic *pRemoteCharacteristic =
-      pRemoteService->getCharacteristic(
-          BLEUUID("0000fff1-0000-1000-8000-00805f9b34fb"));
-
-  String cmdWithCR = command + "\r";
-  pRemoteCharacteristic->writeValue(cmdWithCR.c_str(), cmdWithCR.length());
-
-  unsigned long startTime = millis();
-  while (!responseReady && (millis() - startTime < 2000)) {
-    delay(10);
+  if (xSemaphoreTake(xResponseMutex, portMAX_DELAY) == pdTRUE) {
+    expectingResponse = true;
+    responseReady = false;
+    responseData[0] = '\0';
+    xSemaphoreGive(xResponseMutex);
   }
-  return responseReady;
-}
 
-void requestNextPID() {
-  const char *pid = PID_LIST[currentPidIndex];
-  if (sendCommand(pid)) {
-    processResponse(pid, responseData);
+  String cmdWithCR = String(command) + "\r";
+  pRemoteCharacteristic->writeValue((uint8_t *)cmdWithCR.c_str(),
+                                    cmdWithCR.length(), false);
+
+  bool success = false;
+  if (xSemaphoreTake(xResponseSemaphore, pdMS_TO_TICKS(timeout))) {
+    if (xSemaphoreTake(xResponseMutex, portMAX_DELAY) == pdTRUE) {
+      success = responseReady;
+      xSemaphoreGive(xResponseMutex);
+    }
   }
-  currentPidIndex = (currentPidIndex + 1) % NUM_PIDS;
+
+  if (!success && xSemaphoreTake(xResponseMutex, portMAX_DELAY) == pdTRUE) {
+    expectingResponse = false;
+    xSemaphoreGive(xResponseMutex);
+  }
+
+  return success;
 }
 
-void processResponse(const char *pid, String response) {
-  obdData.lastUpdateTime = millis();
-  int index = response.indexOf("41 " + String(pid).substring(2));
-  if (index < 0)
+bool sendPIDRequest(const char *pid) {
+  if (sendCommand(pid, 200)) {
+    processPIDResponse(pid, responseData);
+    return true;
+  }
+  return false;
+}
+
+void processPIDResponse(const char *pid, const char *response) {
+  char expectedHeader[7];
+  snprintf(expectedHeader, sizeof(expectedHeader), "41 %c%c", pid[0], pid[1]);
+  const char *p = strstr(response, expectedHeader);
+  if (!p)
     return;
-
-  String hexValue = response.substring(index + 6, index + 8);
-  int value = (int)strtol(hexValue.c_str(), NULL, 16);
-
-  if (strcmp(pid, "010C") == 0) { // RPM
-    obdData.engineRPM = value * 25.5;
-  } else if (strcmp(pid, "010D") == 0) { // Speed
-    obdData.vehicleSpeed = value;
-  } else if (strcmp(pid, "0105") == 0) { // Coolant temp
-    obdData.coolantTemp = value - 40;
-  } else if (strcmp(pid, "0104") == 0) { // Engine load
-    obdData.engineLoad = (value * 100) / 255;
-  } else if (strcmp(pid, "012F") == 0) { // Fuel level
-    obdData.fuelLevel = (value * 100) / 255;
-  } else if (strcmp(pid, "0111") == 0) { // Throttle position
-    obdData.throttlePos = (value * 100) / 255;
-  } else if (strcmp(pid, "010F") == 0) { // Intake temp
-    obdData.intakeTemp = value - 40;
-  } else if (strcmp(pid, "0110") == 0) { // MAF rate
-    obdData.mafRate = value / 100.0;
+  p += 5;
+  while (*p == ' ')
+    p++;
+  size_t remaining = strlen(p);
+  if (strcmp(pid, "010C") == 0) { // Engine RPM
+    if (remaining >= 5) {         // Need 2 data bytes (4 chars + separator)
+      int a = hexToInt(p);
+      int b = hexToInt(p + 3);
+      obdData.engineRPM = (a * 256.0 + b) / 4.0;
+    }
+  } else if (strcmp(pid, "010D") == 0) { // Vehicle Speed
+    if (remaining >= 2) {
+      obdData.vehicleSpeed = hexToInt(p);
+    }
+  } else if (strcmp(pid, "0105") == 0) { // Coolant Temperature
+    if (remaining >= 2) {
+      obdData.coolantTemp = hexToInt(p) - 40;
+    }
+  } else if (strcmp(pid, "0104") == 0) { // Engine Load
+    if (remaining >= 2) {
+      int value = hexToInt(p);
+      obdData.engineLoad = (value * 100) / 255;
+    }
+  } else if (strcmp(pid, "012F") == 0) { // Fuel Level
+    if (remaining >= 2) {
+      int value = hexToInt(p);
+      obdData.fuelLevel = (value * 100) / 255;
+    }
+  } else if (strcmp(pid, "0111") == 0) { // Throttle Position
+    if (remaining >= 2) {
+      int value = hexToInt(p);
+      obdData.throttlePos = (value * 100) / 255;
+    }
+  } else if (strcmp(pid, "010F") == 0) { // Intake Air Temperature
+    if (remaining >= 2) {
+      obdData.intakeTemp = hexToInt(p) - 40;
+    }
+  } else if (strcmp(pid, "0110") == 0) { // MAF Rate
+    if (remaining >= 5) { // Need 2 data bytes (4 chars + separator)
+      int a = hexToInt(p);
+      int b = hexToInt(p + 3);
+      obdData.mafRate = (a * 256.0 + b) / 100.0;
+    }
   }
+}
+
+int hexToInt(const char *hex) {
+  char buf[3] = {hex[0], hex[1], '\0'};
+  return (int)strtol(buf, NULL, 16);
 }

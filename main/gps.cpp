@@ -25,12 +25,12 @@ void GPS_read(void *pvParameters) {
 }
 
 void uploadData() {
+  if (gps.location.isValid()) {
+  }
   if (xSemaphoreTake(EcoDriveMutex, 100)) {
     ecoDriveData.gps_valid = gps.location.isValid();
-    if (ecoDriveData.gps_valid) {
-      ecoDriveData.gps_lng = gps.location.lng();
-      ecoDriveData.gps_lat = gps.location.lat();
-    }
+    ecoDriveData.gps_lng = gps.location.lng();
+    ecoDriveData.gps_lat = gps.location.lat();
     xSemaphoreGive(EcoDriveMutex);
   }
 }

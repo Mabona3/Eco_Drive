@@ -1,11 +1,6 @@
 #ifndef CARSTATUS_H
 #define CARSTATUS_H
 
-#include <BLEAdvertisedDevice.h>
-#include <BLEDevice.h>
-#include <BLEScan.h>
-#include <BLEUtils.h>
-
 // OBD data storage
 typedef struct {
   float engineRPM;
@@ -16,7 +11,6 @@ typedef struct {
   int throttlePos;
   int intakeTemp;
   float mafRate;
-  unsigned long lastUpdateTime;
 } OBDData;
 
 void CarStatus_init();
